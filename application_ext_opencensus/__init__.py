@@ -8,7 +8,9 @@ from opencensus.trace.tracer import Tracer
 from opencensus.trace import execution_context
 from opencensus.trace.propagation.trace_context_http_header_format import TraceContextPropagator
 
-from azure.functions import AppExtensionBase, Context, ExtensionException
+from azure.functions import (
+    AppExtensionBase, Context, FunctionExtensionException
+)
 
 
 class OpenCensusExtension(AppExtensionBase):
@@ -26,11 +28,12 @@ class OpenCensusExtension(AppExtensionBase):
     @classmethod
     def pre_invocation_app_level(cls, logger: Logger, context: Context, func_args: typing.Dict[str, object], *args, **kwargs) -> None:
         if not cls.configured:
-            raise ExtensionException(
+            raise FunctionExtensionException(
                 'OpenCensusExtension.configure(appinsight_key=) is not called, '
                 'failed to invoke opencensus extension.'
             )
-
+        logger.warning(f'pre_invocation_app_level: {context.trace_context.Traceparent}')
+        logger.warning(f'pre_invocation_app_level id context: {id(context)}')
         span_context = TraceContextPropagator().from_headers({
             "traceparent": context.trace_context.Traceparent,
             "tracestate": context.trace_context.Tracestate
